@@ -82,3 +82,8 @@ func SubjectUpdateControllerHandler(ctx *framework.Context) error {
 	ctx.JSON(200, "SubjectUpdateController")
 	return nil
 }
+
+func SubjectNameControllerHandler(ctx *framework.Context) error {
+	ctx.JSON(200, "SubjectNameController")
+	return nil
+}

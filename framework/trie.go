@@ -13,16 +13,15 @@ type Tree struct {
 
 // node 代表节点
 type node struct {
-	segment string            // uri中的字符串
-	handler ControllerHandler // 控制器
-	childs  []*node           // 子节点
-	isLast  bool              // 该节点是不是一个独立的uri，是否自身就是一个终极节点
+	segment  string              // uri中的字符串
+	handlers []ControllerHandler // 控制器
+	childs   []*node             // 子节点
+	isLast   bool                // 该节点是不是一个独立的uri，是否自身就是一个终极节点
 }
 
 func newNode() *node {
 	return &node{
 		segment: "",
-		handler: nil,
 		childs:  []*node{},
 		isLast:  false,
 	}
@@ -41,8 +40,9 @@ func NewTree() *Tree {
 /:user/name
 /:user/name/:age 冲突
 */
+
 // AddRouter 增加路由节点
-func (t *Tree) AddRouter(uri string, handler ControllerHandler) error {
+func (t *Tree) AddRouter(uri string, handlers []ControllerHandler) error {
 	n := t.root
 	if n.matchNode(uri) != nil {
 		return errors.New(fmt.Sprintf("trie: router exist %s", uri))
@@ -72,7 +72,7 @@ func (t *Tree) AddRouter(uri string, handler ControllerHandler) error {
 			cnode.segment = seg
 			if isLast {
 				cnode.isLast = true
-				cnode.handler = handler
+				cnode.handlers = handlers
 			}
 			n.childs = append(n.childs, cnode)
 			objNode = cnode
@@ -83,13 +83,13 @@ func (t *Tree) AddRouter(uri string, handler ControllerHandler) error {
 	return nil
 }
 
-// 匹配URI
-func (t *Tree) FindHandler(uri string) ControllerHandler {
+// FindHandler 匹配URI
+func (t *Tree) FindHandler(uri string) []ControllerHandler {
 	matchedNode := t.root.matchNode(uri)
 	if matchedNode == nil {
 		return nil
 	}
-	return matchedNode.handler
+	return matchedNode.handlers
 }
 
 // 判断一个segment是否是通用的segment，以 : 开头的，比如/user/:id

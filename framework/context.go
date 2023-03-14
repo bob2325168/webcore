@@ -17,10 +17,13 @@ type Context struct {
 	writer  http.ResponseWriter
 
 	// 是否超时
-	hasTimeout bool
-	ctx        context.Context
-
+	hasTimeout  bool
+	ctx         context.Context
 	writerMutex *sync.Mutex
+
+	// 当前请求的handler链条
+	handlers []ControllerHandler
+	index    int
 }
 
 func NewContext(r *http.Request, w http.ResponseWriter) *Context {
@@ -29,6 +32,7 @@ func NewContext(r *http.Request, w http.ResponseWriter) *Context {
 		writer:      w,
 		ctx:         r.Context(),
 		writerMutex: &sync.Mutex{},
+		index:       -1,
 	}
 }
 
@@ -218,3 +222,24 @@ func (ctx *Context) Text(code int, obj any) error {
 }
 
 // #endregion
+
+// SetHandlers 为context设置handlers
+func (ctx *Context) SetHandlers(handlers []ControllerHandler) {
+	ctx.handlers = handlers
+}
+
+/**
+Next 会在2个地方调用
+1. 请求处理的入口，ServeHTTP
+2. 每个中间件的逻辑代码中，用于调用下一个中间件
+*/
+// Next 调用context的下一个函数
+func (ctx *Context) Next() error {
+	ctx.index++
+	if ctx.index < len(ctx.handlers) {
+		if err := ctx.handlers[ctx.index](ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}

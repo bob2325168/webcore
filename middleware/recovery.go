@@ -7,7 +7,7 @@ func Recovery() framework.ControllerHandler {
 	return func(ctx *framework.Context) error {
 		defer func() {
 			if err := recover(); err != nil {
-				ctx.JSON(500, err)
+				ctx.JSON(500)
 			}
 		}()
 

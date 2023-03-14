@@ -34,7 +34,7 @@ func FooControllerHandler(c *framework.Context) error {
 			}
 		}()
 		time.Sleep(10 * time.Second)
-		c.JSON(200, "ok")
+		c.SetOkStatus().JSON("ok")
 		finishCh <- struct{}{}
 	}()
 
@@ -44,7 +44,7 @@ func FooControllerHandler(c *framework.Context) error {
 	case <-panicCh:
 		c.WriterMux().Lock()
 		defer c.WriterMux().Unlock()
-		c.JSON(500, "panic")
+		c.SetStatus(500).JSON("panic")
 	// 结束事件
 	case <-finishCh:
 		fmt.Println("complete")
@@ -52,38 +52,38 @@ func FooControllerHandler(c *framework.Context) error {
 	case <-durationCtx.Done():
 		c.WriterMux().Lock()
 		defer c.WriterMux().Unlock()
-		c.JSON(500, "time out")
+		c.SetStatus(500).JSON("time out")
 		c.SetTimeout()
 	}
 	return nil
 }
 
 func UserLoginControllerHandler(ctx *framework.Context) error {
-	ctx.JSON(200, "UserLoginController")
+	ctx.SetOkStatus().JSON("UserLoginController")
 	return nil
 }
 
 func SubjectListControllerHandler(ctx *framework.Context) error {
-	ctx.JSON(200, "SubjectListController")
+	ctx.SetOkStatus().JSON("SubjectListController")
 	return nil
 }
 
 func SubjectDelControllerHandler(ctx *framework.Context) error {
-	ctx.JSON(200, "SubjectDelController")
+	ctx.SetOkStatus().JSON("SubjectDelController")
 	return nil
 }
 
 func SubjectGetControllerHandler(ctx *framework.Context) error {
-	ctx.JSON(200, "SubjectGetController")
+	ctx.SetOkStatus().JSON("SubjectGetController")
 	return nil
 }
 
 func SubjectUpdateControllerHandler(ctx *framework.Context) error {
-	ctx.JSON(200, "SubjectUpdateController")
+	ctx.SetOkStatus().JSON("SubjectUpdateController")
 	return nil
 }
 
 func SubjectNameControllerHandler(ctx *framework.Context) error {
-	ctx.JSON(200, "SubjectNameController")
+	ctx.SetOkStatus().JSON("SubjectNameController")
 	return nil
 }

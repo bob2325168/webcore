@@ -1,20 +1,15 @@
 package framework
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
-	"webcore/err"
 )
 
 type Context struct {
-	request *http.Request
-	writer  http.ResponseWriter
+	request        *http.Request
+	responseWriter http.ResponseWriter
 
 	// 是否超时
 	hasTimeout  bool
@@ -24,15 +19,18 @@ type Context struct {
 	// 当前请求的handler链条
 	handlers []ControllerHandler
 	index    int
+
+	// url路由匹配参数
+	params map[string]string
 }
 
 func NewContext(r *http.Request, w http.ResponseWriter) *Context {
 	return &Context{
-		request:     r,
-		writer:      w,
-		ctx:         r.Context(),
-		writerMutex: &sync.Mutex{},
-		index:       -1,
+		request:        r,
+		responseWriter: w,
+		ctx:            r.Context(),
+		writerMutex:    &sync.Mutex{},
+		index:          -1,
 	}
 }
 
@@ -43,7 +41,7 @@ func (ctx *Context) WriterMux() *sync.Mutex {
 }
 
 func (ctx *Context) GetResponse() http.ResponseWriter {
-	return ctx.writer
+	return ctx.responseWriter
 }
 
 func (ctx *Context) GetRequest() *http.Request {
@@ -82,150 +80,14 @@ func (ctx *Context) Value(key any) any {
 	return ctx.BaseContext().Value(key)
 }
 
-// #endregion
-
-// #region form post
-
-func (ctx *Context) FormAll() map[string][]string {
-	if ctx.request != nil {
-		return ctx.request.PostForm
-	}
-	return map[string][]string{}
-}
-func (ctx *Context) FormInt(key string, def int) int {
-	params := ctx.FormAll()
-	if vals, ok := params[key]; ok {
-		len := len(vals)
-		if len > 0 {
-			intVal, err := strconv.Atoi(vals[len-1])
-			if err != nil {
-				return def
-			}
-			return intVal
-		}
-	}
-	return def
-}
-
-func (ctx *Context) FormString(key string, def string) string {
-	params := ctx.FormAll()
-	if vals, ok := params[key]; ok {
-		len := len(vals)
-		if len > 0 {
-			return vals[len-1]
-		}
-	}
-	return def
-}
-
-func (ctx *Context) FormArray(key string, def []string) []string {
-	params := ctx.FormAll()
-	if vals, ok := params[key]; ok {
-		return vals
-	}
-	return def
-}
-
-// #endregion
-
-// #region query url
-
-func (ctx *Context) QueryAll() map[string][]string {
-	if ctx.request != nil {
-		return ctx.request.URL.Query()
-	}
-	return map[string][]string{}
-}
-func (ctx *Context) QueryInt(key string, def int) int {
-	params := ctx.QueryAll()
-	if vals, ok := params[key]; ok {
-		len := len(vals)
-		if len > 0 {
-			intVal, err := strconv.Atoi(vals[len-1])
-			if err != nil {
-				return def
-			}
-			return intVal
-		}
-	}
-	return def
-}
-
-func (ctx *Context) QueryString(key string, def string) string {
-	params := ctx.QueryAll()
-	if vals, ok := params[key]; ok {
-		len := len(vals)
-		if len > 0 {
-			return vals[len-1]
-		}
-	}
-	return def
-}
-
-func (ctx *Context) QueryArray(key string, def []string) []string {
-	params := ctx.QueryAll()
-	if vals, ok := params[key]; ok {
-		return vals
-	}
-	return def
-}
-
-// #endregion
-
-// #region application/json
-
-func (ctx *Context) BindJSON(obj any) error {
-	if ctx.request != nil {
-		body, err := io.ReadAll(ctx.request.Body)
-		if err != nil {
-			return err
-		}
-		// copy body
-		ctx.request.Body = io.NopCloser(bytes.NewBuffer(body))
-		err = json.Unmarshal(body, obj)
-		if err != nil {
-			return err
-		}
-	} else {
-		return err.ErrRequestEmpty
-	}
-	return nil
-}
-
-// #endregion
-
-// #region response
-
-// JSON 处理json response
-func (ctx *Context) JSON(code int, obj any) error {
-	// 超时返回
-	if ctx.HasTimeout() {
-		return nil
-	}
-	ctx.writer.Header().Set("Content-Type", "application/json")
-	ctx.writer.WriteHeader(code)
-	byt, err := json.Marshal(obj)
-	if err != nil {
-		ctx.writer.WriteHeader(500)
-		return err
-	}
-	ctx.writer.Write(byt)
-	return nil
-}
-
-func (ctx *Context) HTML(code int, obj any, template string) error {
-	return nil
-}
-
-func (ctx *Context) Text(code int, obj any) error {
-	return nil
-}
-
-// #endregion
-
 // SetHandlers 为context设置handlers
 func (ctx *Context) SetHandlers(handlers []ControllerHandler) {
 	ctx.handlers = handlers
+}
+
+// SetParams 设置参数
+func (ctx *Context) SetParams(params map[string]string) {
+	ctx.params = params
 }
 
 /**

@@ -21,8 +21,14 @@ func NewCore() *Core {
 	router["DELETE"] = NewTree()
 
 	return &Core{
-		router: router,
+		router:      router,
+		middlewares: nil,
 	}
+}
+
+// 注册中间件
+func (c *Core) Use(middlewares ...ControllerHandler) {
+	c.middlewares = append(c.middlewares, middlewares...)
 }
 
 // Group 初始化Group
@@ -33,27 +39,27 @@ func (c *Core) Group(prefix string) IGroup {
 
 func (c *Core) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := NewContext(r, w)
-	// 查找路由
-	handlers := c.FindRouter(r)
-	if handlers == nil {
+
+	// 查找路由节点
+	node := c.FindRouterNode(r)
+	if node == nil {
 		// 没有找到，打印日志
-		ctx.JSON(404, "not found")
+		ctx.SetStatus(404).JSON("not found")
 		return
 	}
 
 	// 设置context的handlers
-	ctx.SetHandlers(handlers)
+	ctx.SetHandlers(node.handlers)
+
+	//设置路由参数
+	params := node.parseParamsFromEndNode(r.URL.Path)
+	ctx.SetParams(params)
 
 	// 调用路由函数，如果返回err，返回500
 	if err := ctx.Next(); err != nil {
-		ctx.JSON(500, "inner error")
+		ctx.SetStatus(500).JSON("inner error")
 		return
 	}
-}
-
-// 注册中间件
-func (c *Core) Use(middlewares ...ControllerHandler) {
-	c.middlewares = append(c.middlewares, middlewares...)
 }
 
 func (c *Core) Get(uri string, handlers ...ControllerHandler) {
@@ -85,13 +91,13 @@ func (c *Core) Delete(uri string, handlers ...ControllerHandler) {
 }
 
 // 查找路由，如果没有匹配到返回nil
-func (c *Core) FindRouter(req *http.Request) []ControllerHandler {
-	// url和method都全部转化为大写，保证大小写不敏感
-	upperUri := strings.ToUpper(req.URL.Path)
+func (c *Core) FindRouterNode(req *http.Request) *node {
+	// method转化为大写，保证大小写不敏感
+	uri := req.URL.Path
 	upperMethod := strings.ToUpper(req.Method)
 	// 查找第一层
 	if methodHandlers, ok := c.router[upperMethod]; ok {
-		return methodHandlers.FindHandler(upperUri)
+		return methodHandlers.root.matchNode(uri)
 	}
 	return nil
 }

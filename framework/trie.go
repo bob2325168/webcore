@@ -17,13 +17,16 @@ type node struct {
 	handlers []ControllerHandler // 控制器
 	childs   []*node             // 子节点
 	isLast   bool                // 该节点是不是一个独立的uri，是否自身就是一个终极节点
+	parent   *node               // 父节点，双向指针
 }
 
 func newNode() *node {
 	return &node{
-		segment: "",
-		childs:  []*node{},
-		isLast:  false,
+		segment:  "",
+		handlers: nil,
+		childs:   []*node{},
+		isLast:   false,
+		parent:   nil,
 	}
 }
 
@@ -74,6 +77,8 @@ func (t *Tree) AddRouter(uri string, handlers []ControllerHandler) error {
 				cnode.isLast = true
 				cnode.handlers = handlers
 			}
+			// 修改父节点的指针
+			cnode.parent = n
 			n.childs = append(n.childs, cnode)
 			objNode = cnode
 		}
@@ -81,15 +86,6 @@ func (t *Tree) AddRouter(uri string, handlers []ControllerHandler) error {
 		n = objNode
 	}
 	return nil
-}
-
-// FindHandler 匹配URI
-func (t *Tree) FindHandler(uri string) []ControllerHandler {
-	matchedNode := t.root.matchNode(uri)
-	if matchedNode == nil {
-		return nil
-	}
-	return matchedNode.handlers
 }
 
 // 判断一个segment是否是通用的segment，以 : 开头的，比如/user/:id
@@ -159,4 +155,23 @@ func (n *node) filterChildNodes(seg string) []*node {
 		}
 	}
 	return nodes
+}
+
+// 将uri解析为params
+func (n *node) parseParamsFromEndNode(uri string) map[string]string {
+	ret := map[string]string{}
+	segments := strings.Split(uri, "/")
+	cnt := len(segments)
+	cur := n
+	for i := cnt - 1; i > 0; i-- {
+		if cur.segment == "" {
+			break
+		}
+		// 如果是通配符节点
+		if isWildSegment(cur.segment) {
+			ret[cur.segment[1:]] = segments[i]
+		}
+		cur = cur.parent
+	}
+	return ret
 }

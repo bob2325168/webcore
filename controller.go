@@ -58,12 +58,27 @@ func FooControllerHandler(c *framework.Context) error {
 	return nil
 }
 
-func UserLoginControllerHandler(c *framework.Context) error {
-	c.JSON(200, "UserLoginController")
+func UserLoginControllerHandler(ctx *framework.Context) error {
+	ctx.JSON(200, "UserLoginController")
 	return nil
 }
 
-func SubjectListControllerHandler(c *framework.Context) error {
-	c.JSON(200, "SubjectListController")
+func SubjectListControllerHandler(ctx *framework.Context) error {
+	ctx.JSON(200, "SubjectListController")
+	return nil
+}
+
+func SubjectDelControllerHandler(ctx *framework.Context) error {
+	ctx.JSON(200, "SubjectDelController")
+	return nil
+}
+
+func SubjectGetControllerHandler(ctx *framework.Context) error {
+	ctx.JSON(200, "SubjectGetController")
+	return nil
+}
+
+func SubjectUpdateControllerHandler(ctx *framework.Context) error {
+	ctx.JSON(200, "SubjectUpdateController")
 	return nil
 }

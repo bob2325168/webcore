@@ -8,6 +8,9 @@ func RegisterRouter(core *framework.Core) {
 	// 批量通用前缀匹配
 	subjectApi := core.Group("/subject")
 	{
-		subjectApi.Get("/list", SubjectListControllerHandler)
+		subjectApi.Get("/list/all", SubjectListControllerHandler)
+		subjectApi.Get("/:id", SubjectGetControllerHandler)
+		subjectApi.Put("/:id", SubjectUpdateControllerHandler)
+		subjectApi.Delete("/:id", SubjectDelControllerHandler)
 	}
 }

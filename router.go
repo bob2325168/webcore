@@ -7,8 +7,8 @@ import (
 
 func RegisterRouter(core *framework.Core) {
 	// HTTP方法+静态路由匹配
-	//core.Get("/user/login", UserLoginControllerHandler)
-	core.Get("/user/login", middleware.Foo1(), UserLoginControllerHandler)
+	core.Get("/user/login", UserLoginControllerHandler)
+	//core.Get("/user/login", middleware.Foo1(), UserLoginControllerHandler)
 
 	// 批量通用前缀匹配
 	subjectAPI := core.Group("/subject")

@@ -26,9 +26,10 @@ func Timeout(d time.Duration) framework.ControllerHandler {
 					panicCh <- p
 				}
 			}()
-			// TODO
-			// 使用Next执行具体的业务逻辑
 
+			// 使用Next执行具体的业务逻辑
+			c.Next()
+			
 			finishCh <- struct{}{}
 		}()
 

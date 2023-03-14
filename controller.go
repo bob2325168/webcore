@@ -16,7 +16,6 @@ import (
 */
 
 func FooControllerHandler(c *framework.Context) error {
-
 	//处理panic的消息通知
 	panicCh := make(chan any, 1)
 	//处理完成的消息通知
@@ -59,7 +58,10 @@ func FooControllerHandler(c *framework.Context) error {
 }
 
 func UserLoginControllerHandler(ctx *framework.Context) error {
-	ctx.SetOkStatus().JSON("UserLoginController")
+	foo, _ := ctx.QueryString("foo", "def")
+	// 等待10s结束执行
+	time.Sleep(10 * time.Second)
+	ctx.SetOkStatus().JSON("UserLoginController: " + foo)
 	return nil
 }
 
